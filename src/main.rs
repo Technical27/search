@@ -81,6 +81,7 @@ fn main() {
 
         let text = gtk::Entry::new();
         text.set_placeholder_text(Some("Search..."));
+        text.grab_focus();
         win.add(&text);
 
         {
@@ -125,6 +126,7 @@ fn main() {
         }
 
         win.show_all();
+        win.present();
     });
 
     application.run(&[]);
