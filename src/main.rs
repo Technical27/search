@@ -2,12 +2,15 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use gio::prelude::*;
 use gtk::prelude::*;
+use regex::Regex;
 use std::env;
 use std::path::Path;
+use std::process::Command;
 
 #[derive(Clone, Debug)]
 struct DesktopApp {
     name: String,
+    exec: String,
 }
 
 fn get_desktop_files() -> Vec<String> {
@@ -30,7 +33,7 @@ fn get_desktop_files() -> Vec<String> {
 fn parse_desktop_file(file: String) -> Option<DesktopApp> {
     let groups: Vec<_> = file.split("\n\n").collect();
 
-    let mut lines = groups
+    let lines = groups
         .iter()
         .filter(|g| g.starts_with("[Desktop Entry]"))
         .take(1)
@@ -40,11 +43,14 @@ fn parse_desktop_file(file: String) -> Option<DesktopApp> {
         return None;
     }
 
-    let name = lines.find(|l| l.starts_with("Name=")).map(|l| &l[5..]);
+    let mut keys = lines.clone().map(|l| l.split("=").collect::<Vec<&str>>());
 
-    Some(DesktopApp {
-        name: name?.to_string(),
-    })
+    let name = keys.find(|p| p[0] == "Name").map(|n| n[1].to_string())?;
+    let exec = keys.find(|p| p[0] == "Exec").map(|n| n[1].to_string())?;
+    let re = Regex::new(r"(?i) %[ufkci]").unwrap();
+    let exec = re.replace(&exec, "").to_string();
+
+    Some(DesktopApp { name, exec })
 }
 
 fn get_desktop_apps() -> Vec<DesktopApp> {
@@ -104,6 +110,9 @@ fn main() {
 
                         if let Some(app) = matches.get(0) {
                             println!("app: {:?}", app);
+                            let exec = app.0.exec.clone();
+                            let args: Vec<_> = exec.split(" ").collect();
+                            Command::new(args[0]).args(&args[1..]).spawn().unwrap();
                         } else {
                             println!("no app found");
                         }
