@@ -77,6 +77,8 @@ fn main() {
         win.set_title("Search...");
         win.set_default_size(350, 70);
         win.set_decorated(false);
+        win.set_modal(true);
+        win.set_keep_above(true);
         win.set_position(gtk::WindowPosition::Center);
 
         let text = gtk::Entry::new();
@@ -126,7 +128,6 @@ fn main() {
         }
 
         win.show_all();
-        win.present();
     });
 
     application.run(&[]);
